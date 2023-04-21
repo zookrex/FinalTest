@@ -78,4 +78,50 @@ public class StudentController {
         return ResponseEntity.ok(student);
 
     }
+    
+    // Endpoint to update marks of a student by ID
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateStudentMarks(@PathVariable Long id, @RequestBody Student student) {
+
+        // Validate the student object
+        if (student.getMarks1() == null || student.getMarks2() == null || student.getMarks3() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Marks 1, 2 and 3 are mandatory.");
+        }
+        if (student.getMarks1() < 0 || student.getMarks1() > 100) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Marks 1 should be between 0 and 100.");
+        }
+        if (student.getMarks2() < 0 || student.getMarks2() > 100) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Marks 2 should be between 0 and 100.");
+        }
+        if (student.getMarks3() < 0 || student.getMarks3() > 100) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Marks 3 should be between 0 and 100.");
+        }
+
+        // Find the student object by ID
+        Optional<Student> optionalStudent = studentRepository.findById(id);
+        if (!optionalStudent.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Student not found.");
+        }
+        Student foundStudent = optionalStudent.get();
+
+        // Update the marks and calculated fields
+        foundStudent.setMarks1(student.getMarks1());
+        foundStudent.setMarks2(student.getMarks2());
+        foundStudent.setMarks3(student.getMarks3());
+        int totalMarks = foundStudent.getMarks1() + foundStudent.getMarks2() + foundStudent.getMarks3();
+        Float averageMarks =(float) (totalMarks / 3.0);
+        String result = "PASS";
+        if (foundStudent.getMarks1() < 35 || foundStudent.getMarks2() < 35 || foundStudent.getMarks3() < 35) {
+            result = "FAIL";
+        }
+        foundStudent.setTotal(totalMarks);
+        foundStudent.setAverage(averageMarks);
+        foundStudent.setResult(result);
+
+        // Save the updated student object
+        Student updatedStudent = studentRepository.save(foundStudent);
+
+        // Return the updated student object
+        return ResponseEntity.status(HttpStatus.OK).body(updatedStudent);
+    }
 }
